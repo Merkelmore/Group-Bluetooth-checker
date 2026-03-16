@@ -10,11 +10,13 @@ class ScanMemberResult {
   final int memberId;
   final int rssi;
   final DateTime detectedAt;
+  final String? name;
 
   ScanMemberResult({
     required this.memberId,
     required this.rssi,
     required this.detectedAt,
+    this.name,
   });
 }
 
@@ -96,18 +98,30 @@ class BleScanner {
       memberId: decoded.memberId,
       rssi: result.rssi,
       detectedAt: DateTime.now(),
+      name: _extractName(result),
     );
+  }
+
+  /// Extract the member display name from the BLE advertisement local name.
+  String? _extractName(ScanResult result) {
+    final advName = result.advertisementData.advName;
+    if (advName.startsWith('GC:')) {
+      return advName.substring(3);
+    }
+    return advName.isNotEmpty ? advName : null;
   }
 
   /// Update a list of [Member] models with scan results.
   /// Members found in the scan are marked as nearby; others are marked absent.
+  /// Unknown members (detected but not in the list) are automatically added.
   static List<Member> applyResults(
     List<Member> members,
     List<ScanMemberResult> results,
   ) {
     final resultMap = {for (final r in results) r.memberId: r};
+    final knownIds = {for (final m in members) m.memberId};
 
-    return members.map((member) {
+    final updated = members.map((member) {
       final result = resultMap[member.memberId];
       if (result != null) {
         return member.copyWith(
@@ -119,5 +133,20 @@ class BleScanner {
         return member.copyWith(isNearby: false);
       }
     }).toList();
+
+    // Auto-add any new members detected that aren't in the list yet.
+    for (final result in results) {
+      if (!knownIds.contains(result.memberId)) {
+        updated.add(Member(
+          memberId: result.memberId,
+          name: result.name ?? 'Member ${result.memberId}',
+          isNearby: true,
+          lastSeen: result.detectedAt,
+          lastRssi: result.rssi,
+        ));
+      }
+    }
+
+    return updated;
   }
 }

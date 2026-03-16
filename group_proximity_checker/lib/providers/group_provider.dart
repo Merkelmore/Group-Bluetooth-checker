@@ -61,6 +61,7 @@ class GroupNotifier extends Notifier<Group?> {
     await ref.read(bleAdvertiserProvider).startAdvertising(
           groupId: groupId,
           memberId: memberId,
+          memberName: myName,
         );
   }
 

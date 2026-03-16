@@ -13,6 +13,7 @@ class BleAdvertiser {
   Future<void> startAdvertising({
     required String groupId,
     required int memberId,
+    String? memberName,
   }) async {
     if (_isAdvertising) return;
 
@@ -21,10 +22,14 @@ class BleAdvertiser {
       memberId: memberId,
     );
 
+    // Encode the member name in the local name field with our prefix.
+    final localName = memberName != null ? 'GC:$memberName' : null;
+
     final advertiseData = AdvertiseData(
       serviceUuid: BleConstants.serviceUuid.str,
       manufacturerId: BleConstants.manufacturerId,
       manufacturerData: data,
+      localName: localName,
     );
 
     final advertiseSettings = AdvertiseSettings(

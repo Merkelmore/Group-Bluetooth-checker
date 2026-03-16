@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -6,6 +7,9 @@ import 'package:permission_handler/permission_handler.dart';
 /// Requests all BLE and camera permissions needed by the app.
 /// Returns true if all critical permissions are granted.
 Future<bool> requestPermissions(BuildContext context) async {
+  // On web, permissions are handled differently — skip native permission requests.
+  if (kIsWeb) return true;
+
   final permissions = <Permission>[
     Permission.camera,
     Permission.bluetoothScan,

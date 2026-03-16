@@ -39,9 +39,15 @@ class _MemberScreenState extends ConsumerState<MemberScreen>
 
     final advertiser = ref.read(bleAdvertiserProvider);
     if (!advertiser.isAdvertising) {
+      // Find our name from the member list, or use a fallback.
+      final myName = group.members
+          .where((m) => m.memberId == group.myMemberId)
+          .map((m) => m.name)
+          .firstOrNull;
       await advertiser.startAdvertising(
         groupId: group.groupId,
         memberId: group.myMemberId,
+        memberName: myName,
       );
       if (mounted) setState(() {});
     }
