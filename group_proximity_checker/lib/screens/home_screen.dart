@@ -28,10 +28,13 @@ class HomeScreen extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.bluetooth_searching,
-                  size: 80,
-                  color: Colors.blue,
+                ClipOval(
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    width: 120,
+                    height: 120,
+                    fit: BoxFit.cover,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 const Text(
