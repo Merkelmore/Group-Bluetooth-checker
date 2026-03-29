@@ -38,11 +38,15 @@ class BleGattService {
       }
     });
 
-    // Start scanning for our service UUID.
+    // Start scanning for all BLE devices. We filter by manufacturer data
+    // in _processJoinResult instead of using withServices, because the
+    // 128-bit UUID + manufacturer data + local name can exceed the 31-byte
+    // legacy BLE advertisement limit, causing Android to silently drop the
+    // service UUID and making the filter miss our devices entirely.
     FlutterBluePlus.startScan(
-      withServices: [BleConstants.serviceUuid],
       timeout: const Duration(seconds: 120), // Long join window
       androidUsesFineLocation: true,
+      continuousUpdates: true,
     );
 
     return subscription;

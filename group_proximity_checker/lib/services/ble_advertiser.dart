@@ -25,8 +25,13 @@ class BleAdvertiser {
     // Encode the member name in the local name field with our prefix.
     final localName = memberName != null ? 'GC:$memberName' : null;
 
+    // Omit the service UUID from the advertisement to stay under the
+    // 31-byte legacy BLE advertisement limit. The coordinator identifies us
+    // via manufacturer data (group ID + member ID) which is more reliable.
+    // Including a 128-bit UUID (18 bytes) alongside manufacturer data
+    // (10 bytes) and a local name would overflow the packet, causing
+    // Android to silently drop fields.
     final advertiseData = AdvertiseData(
-      serviceUuid: BleConstants.serviceUuid.str,
       manufacturerId: BleConstants.manufacturerId,
       manufacturerData: data,
       localName: localName,

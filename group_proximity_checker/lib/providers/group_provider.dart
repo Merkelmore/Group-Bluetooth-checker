@@ -53,6 +53,7 @@ class GroupNotifier extends Notifier<Group?> {
       members: [],
       isCoordinator: false,
       myMemberId: memberId,
+      myName: myName,
     );
     await StorageService.saveGroup(group);
     state = group;

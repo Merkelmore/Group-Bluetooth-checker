@@ -20,13 +20,14 @@ class GroupAdapter extends TypeAdapter<Group> {
       members: (fields[3] as List).cast<Member>(),
       isCoordinator: fields[4] as bool,
       myMemberId: fields[5] as int,
+      myName: fields[6] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Group obj) {
     writer
-      ..writeByte(6) // number of fields
+      ..writeByte(7) // number of fields
       ..writeByte(0)
       ..write(obj.groupId)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class GroupAdapter extends TypeAdapter<Group> {
       ..writeByte(4)
       ..write(obj.isCoordinator)
       ..writeByte(5)
-      ..write(obj.myMemberId);
+      ..write(obj.myMemberId)
+      ..writeByte(6)
+      ..write(obj.myName);
   }
 
   @override

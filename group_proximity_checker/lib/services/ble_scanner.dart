@@ -51,11 +51,15 @@ class BleScanner {
       }
     });
 
-    // Start the scan, filtering by our service UUID.
+    // Start the scan without a service UUID filter. The 128-bit UUID +
+    // manufacturer data + local name often exceeds the 31-byte legacy BLE
+    // advertisement limit, causing Android to drop the service UUID and
+    // making the withServices filter miss our devices. We filter by
+    // manufacturer data in _parseResult instead.
     await FlutterBluePlus.startScan(
-      withServices: [BleConstants.serviceUuid],
       timeout: duration,
       androidUsesFineLocation: true,
+      continuousUpdates: true,
     );
 
     // Wait for the scan to complete.

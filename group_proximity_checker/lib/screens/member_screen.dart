@@ -39,11 +39,12 @@ class _MemberScreenState extends ConsumerState<MemberScreen>
 
     final advertiser = ref.read(bleAdvertiserProvider);
     if (!advertiser.isAdvertising) {
-      // Find our name from the member list, or use a fallback.
-      final myName = group.members
-          .where((m) => m.memberId == group.myMemberId)
-          .map((m) => m.name)
-          .firstOrNull;
+      // Use the persisted name, or fall back to member list / default.
+      final myName = group.myName ??
+          group.members
+              .where((m) => m.memberId == group.myMemberId)
+              .map((m) => m.name)
+              .firstOrNull;
       await advertiser.startAdvertising(
         groupId: group.groupId,
         memberId: group.myMemberId,

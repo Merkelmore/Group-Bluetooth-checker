@@ -23,6 +23,9 @@ class Group extends HiveObject {
   @HiveField(5)
   final int myMemberId;
 
+  @HiveField(6)
+  final String? myName;
+
   Group({
     required this.groupId,
     required this.groupName,
@@ -30,6 +33,7 @@ class Group extends HiveObject {
     required this.members,
     required this.isCoordinator,
     required this.myMemberId,
+    this.myName,
   });
 
   Group copyWith({
@@ -39,6 +43,7 @@ class Group extends HiveObject {
     List<Member>? members,
     bool? isCoordinator,
     int? myMemberId,
+    String? myName,
   }) {
     return Group(
       groupId: groupId ?? this.groupId,
@@ -47,6 +52,7 @@ class Group extends HiveObject {
       members: members ?? List.from(this.members),
       isCoordinator: isCoordinator ?? this.isCoordinator,
       myMemberId: myMemberId ?? this.myMemberId,
+      myName: myName ?? this.myName,
     );
   }
 
