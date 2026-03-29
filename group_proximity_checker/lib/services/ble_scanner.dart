@@ -84,35 +84,35 @@ class BleScanner {
   /// Parse a BLE scan result to extract group/member info.
   /// Returns null if the advertisement doesn't match our protocol.
   ScanMemberResult? _parseResult(ScanResult result, String groupId) {
-    final manufacturerData = result.advertisementData.manufacturerData;
-    if (manufacturerData.isEmpty) return null;
-
-    // Look for our manufacturer ID.
-    final data = manufacturerData[BleConstants.manufacturerId];
-    if (data == null) return null;
-
-    final decoded =
-        BleConstants.decodeAdvertisementData(Uint8List.fromList(data));
-    if (decoded == null) return null;
-
-    // Only accept members from the same group.
-    if (decoded.groupId != groupId) return null;
-
-    return ScanMemberResult(
-      memberId: decoded.memberId,
-      rssi: result.rssi,
-      detectedAt: DateTime.now(),
-      name: _extractName(result),
-    );
-  }
-
-  /// Extract the member display name from the BLE advertisement local name.
-  String? _extractName(ScanResult result) {
+    // Primary: parse from local name (most reliable across BLE stacks).
     final advName = result.advertisementData.advName;
-    if (advName.startsWith('GC:')) {
-      return advName.substring(3);
+    final decoded = BleConstants.decodeLocalName(advName);
+    if (decoded != null && decoded.groupId == groupId) {
+      return ScanMemberResult(
+        memberId: decoded.memberId,
+        rssi: result.rssi,
+        detectedAt: DateTime.now(),
+        name: decoded.name,
+      );
     }
-    return advName.isNotEmpty ? advName : null;
+
+    // Fallback: try manufacturer data (may not work on all devices).
+    final manufacturerData = result.advertisementData.manufacturerData;
+    final data = manufacturerData[BleConstants.manufacturerId];
+    if (data != null) {
+      final mfrDecoded =
+          BleConstants.decodeAdvertisementData(Uint8List.fromList(data));
+      if (mfrDecoded != null && mfrDecoded.groupId == groupId) {
+        return ScanMemberResult(
+          memberId: mfrDecoded.memberId,
+          rssi: result.rssi,
+          detectedAt: DateTime.now(),
+          name: null,
+        );
+      }
+    }
+
+    return null;
   }
 
   /// Update a list of [Member] models with scan results.

@@ -53,44 +53,45 @@ class BleGattService {
   }
 
   /// Process a scan result during the join phase.
-  /// Extracts member info and connects via GATT to read the name.
+  /// Extracts member info from the local name or manufacturer data.
   Future<void> _processJoinResult({
     required ScanResult result,
     required String groupId,
     required void Function(Member member) onMemberFound,
     required Set<int> knownMemberIds,
   }) async {
-    // Check manufacturer data for our group.
-    final manufacturerData = result.advertisementData.manufacturerData;
-    final data = manufacturerData[BleConstants.manufacturerId];
-    if (data == null) return;
+    // Primary: parse identity from local name (most reliable).
+    final advName = result.advertisementData.advName;
+    final decoded = BleConstants.decodeLocalName(advName);
 
-    final decoded = BleConstants.decodeAdvertisementData(
-      Uint8List.fromList(data),
-    );
-    if (decoded == null || decoded.groupId != groupId) return;
+    final int memberId;
+    String? memberName;
+
+    if (decoded != null && decoded.groupId == groupId) {
+      memberId = decoded.memberId;
+      memberName = decoded.name;
+    } else {
+      // Fallback: try manufacturer data.
+      final manufacturerData = result.advertisementData.manufacturerData;
+      final data = manufacturerData[BleConstants.manufacturerId];
+      if (data == null) return;
+
+      final mfrDecoded = BleConstants.decodeAdvertisementData(
+        Uint8List.fromList(data),
+      );
+      if (mfrDecoded == null || mfrDecoded.groupId != groupId) return;
+      memberId = mfrDecoded.memberId;
+    }
 
     // Skip already-known members.
-    if (knownMemberIds.contains(decoded.memberId)) return;
-
-    // Try to get the name from the local name in the advertisement.
-    String memberName = result.advertisementData.advName;
-    if (memberName.isEmpty) {
-      memberName = 'Member ${decoded.memberId}';
-    }
-
-    // If the name starts with our prefix, extract the actual name.
-    // Convention: local name is "GC:<name>" for our app.
-    if (memberName.startsWith('GC:')) {
-      memberName = memberName.substring(3);
-    }
+    if (knownMemberIds.contains(memberId)) return;
 
     final member = Member(
-      memberId: decoded.memberId,
-      name: memberName,
+      memberId: memberId,
+      name: memberName ?? 'Member $memberId',
     );
 
-    knownMemberIds.add(decoded.memberId);
+    knownMemberIds.add(memberId);
     onMemberFound(member);
   }
 

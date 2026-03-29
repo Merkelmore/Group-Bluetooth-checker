@@ -65,4 +65,48 @@ class BleConstants {
   static int generateMemberId() {
     return Random.secure().nextInt(65534) + 1;
   }
+
+  /// Prefix used in the BLE local name to identify our app's advertisements.
+  static const String localNamePrefix = 'GPC';
+
+  /// Encode group ID, member ID, and optional name into a BLE local name.
+  ///
+  /// Format: `GPC<8hexGroupId><4hexMemberId><name>`
+  /// Example: `GPCa1b2c3d41a2bAlice`
+  ///
+  /// BLE local name limit is ~29 bytes. Protocol overhead is 15 bytes,
+  /// leaving ~14 characters for the display name.
+  static String encodeLocalName({
+    required String groupId,
+    required int memberId,
+    String? name,
+  }) {
+    final memberHex = memberId.toRadixString(16).padLeft(4, '0');
+    final base = '$localNamePrefix$groupId$memberHex';
+    if (name != null && name.isNotEmpty) {
+      // Truncate name to fit within ~29 bytes total.
+      final maxNameLen = 29 - base.length;
+      final truncated =
+          name.length > maxNameLen ? name.substring(0, maxNameLen) : name;
+      return '$base$truncated';
+    }
+    return base;
+  }
+
+  /// Decode a BLE local name back into group ID, member ID, and name.
+  /// Returns null if the name doesn't match our protocol.
+  static ({String groupId, int memberId, String? name})? decodeLocalName(
+      String localName) {
+    if (!localName.startsWith(localNamePrefix)) return null;
+    // Minimum length: "GPC" (3) + groupId (8) + memberId (4) = 15
+    if (localName.length < 15) return null;
+
+    final groupId = localName.substring(3, 11);
+    final memberHex = localName.substring(11, 15);
+    final memberId = int.tryParse(memberHex, radix: 16);
+    if (memberId == null) return null;
+
+    final name = localName.length > 15 ? localName.substring(15) : null;
+    return (groupId: groupId, memberId: memberId, name: name);
+  }
 }

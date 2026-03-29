@@ -17,23 +17,16 @@ class BleAdvertiser {
   }) async {
     if (_isAdvertising) return;
 
-    final data = BleConstants.encodeAdvertisementData(
+    // Encode ALL identity info in the local name — the single most reliable
+    // BLE advertisement field across Android devices and BLE stacks.
+    // Format: GPC<groupId8hex><memberId4hex><name>
+    final localName = BleConstants.encodeLocalName(
       groupId: groupId,
       memberId: memberId,
+      name: memberName,
     );
 
-    // Encode the member name in the local name field with our prefix.
-    final localName = memberName != null ? 'GC:$memberName' : null;
-
-    // Omit the service UUID from the advertisement to stay under the
-    // 31-byte legacy BLE advertisement limit. The coordinator identifies us
-    // via manufacturer data (group ID + member ID) which is more reliable.
-    // Including a 128-bit UUID (18 bytes) alongside manufacturer data
-    // (10 bytes) and a local name would overflow the packet, causing
-    // Android to silently drop fields.
     final advertiseData = AdvertiseData(
-      manufacturerId: BleConstants.manufacturerId,
-      manufacturerData: data,
       localName: localName,
     );
 
